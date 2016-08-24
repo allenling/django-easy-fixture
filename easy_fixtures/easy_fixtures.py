@@ -135,17 +135,17 @@ class FixtureFileGen(object):
     def __init__(self, templates, file_path='fixtures'):
         self.templates = templates
         self.file_path = file_path
+        self.index = 0
 
     def next(self):
-        n = 0
-        if n < len(self.templates):
-            template = self.templates[n]
+        if self.index < len(self.templates):
+            template = self.templates[self.index]
             tem = importlib.import_module(template)
             ef = EasyFixture(tem.fixtures_template)
             fixture_path = os.path.join(self.file_path, os.path.basename(tem.__file__).split('.')[0]) + '.json'
             with open(fixture_path, 'w') as f:
                 f.write(ef.output())
-            n += 1
+            self.index += 1
             return fixture_path
         else:
             raise StopIteration
