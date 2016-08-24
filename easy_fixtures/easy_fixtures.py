@@ -1,15 +1,15 @@
 # coding=utf-8
 from __future__ import unicode_literals
 from __future__ import absolute_import
-import importlib
 from collections import defaultdict
 import json
 
 from django.db.models import fields as django_fields
+from django.apps import apps
 from django.utils import timezone
 
 
-class EasyFixtures(object):
+class EasyFixture(object):
 
     def __init__(self, fixtures):
         self.fixtures = {}
@@ -21,9 +21,9 @@ class EasyFixtures(object):
 
     def get_model(self, model_string):
         if model_string not in self.models:
-            app, model_name = model_string.split('.')
-            app_module = importlib.import_module(app + '.models')
-            self.models[model_string] = getattr(app_module, model_name)
+            app_name, model_name = model_string.split('.')
+            app_config = apps.get_app_config(app_name)
+            self.models[model_string] = app_config.get_model(model_name)
         return self.models[model_string]
 
     def get_model_field_val(self, model_string):
@@ -102,8 +102,8 @@ class EasyFixtures(object):
     def write(self, wirteable):
         fixtures_data = []
         for model_string, datas in self.fixtures.iteritems():
-            app_label, model_name = model_string.split('.')
-            model_str = '%s.%s' % (app_label, model_name.lower())
+            app_name, model_name = model_string.split('.')
+            model_str = '%s.%s' % (app_name, model_name.lower())
             for data in datas:
                 pk = data.pop('pk')
                 fixtures_data.append({'model': model_str, 'pk': pk, 'fields': data})
