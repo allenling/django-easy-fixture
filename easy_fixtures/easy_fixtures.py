@@ -99,7 +99,7 @@ class EasyFixture(object):
                     self.patch_relation(model, data, datas, field_name, field, model_strings)
             self.finish_map[model_string].append(data['pk'])
 
-    def write(self, wirteable):
+    def return_complete_fixtures(self):
         fixtures_data = []
         for model_string, datas in self.fixtures.iteritems():
             app_name, model_name = model_string.split('.')
@@ -107,9 +107,9 @@ class EasyFixture(object):
             for data in datas:
                 pk = data.pop('pk')
                 fixtures_data.append({'model': model_str, 'pk': pk, 'fields': data})
-        json.dump(fixtures_data, wirteable)
+        return json.dumps(fixtures_data)
 
-    def output(self, wirteable):
+    def output(self):
         model_strings = self.fixtures.keys()
         while model_strings:
             model_string = model_strings.pop()
@@ -120,4 +120,4 @@ class EasyFixture(object):
                 assert 'pk' in data_fields
             field_val = self.get_model_field_val(model_string)
             self.clean_model_data(model_string, model, datas, field_val, model_strings)
-        self.write(wirteable)
+        return self.return_complete_fixtures()
