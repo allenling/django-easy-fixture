@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from collections import defaultdict
 import json
+import os
+import importlib
 
 from django.db.models import fields as django_fields
 from django.apps import apps
@@ -12,12 +14,19 @@ from django.utils import timezone
 class EasyFixture(object):
 
     def __init__(self, fixtures):
-        self.fixtures = {}
-        for fixture in fixtures:
-            self.fixtures[fixture] = [i for i in fixtures[fixture]]
+        self.initial_fixtures(fixtures)
         self.finish_map = defaultdict(list)
         self.model_field_val = {}
         self.models = {}
+
+    def initial_fixtures(self, fixtures):
+        self.fixtures = {}
+        for fixture in fixtures:
+            self.fixtures[fixture] = []
+            for data in fixtures[fixture]:
+                tmp = {}
+                tmp.update(data)
+                self.fixtures[fixture].append(tmp)
 
     def get_model(self, model_string):
         if model_string not in self.models:
@@ -86,6 +95,7 @@ class EasyFixture(object):
 
     def clean_model_data(self, model_string, model, datas, field_val, model_strings):
         for data in datas:
+            assert 'pk' in data
             if data['pk'] in self.finish_map[model_string]:
                 continue
             for field_name in field_val['requires']:
@@ -114,10 +124,31 @@ class EasyFixture(object):
         while model_strings:
             model_string = model_strings.pop()
             datas = self.fixtures.get(model_string, [])
-            data_fields = datas[0].keys() if datas else []
             model = self.get_model(model_string)
-            if data_fields:
-                assert 'pk' in data_fields
             field_val = self.get_model_field_val(model_string)
             self.clean_model_data(model_string, model, datas, field_val, model_strings)
         return self.return_complete_fixtures()
+
+
+class FixtureFileGen(object):
+
+    def __init__(self, templates, file_path='fixtures'):
+        self.templates = templates
+        self.file_path = file_path
+
+    def next(self):
+        n = 0
+        if n < len(self.templates):
+            template = self.templates[n]
+            tem = importlib.import_module(template)
+            ef = EasyFixture(tem.fixtures_template)
+            fixture_path = os.path.join(self.file_path, os.path.basename(tem.__file__).split('.')[0]) + '.json'
+            with open(fixture_path, 'w') as f:
+                f.write(ef.output())
+            n += 1
+            return fixture_path
+        else:
+            raise StopIteration
+
+    def __iter__(self):
+        return self
