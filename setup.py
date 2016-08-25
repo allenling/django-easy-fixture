@@ -29,6 +29,7 @@ setup(
                     'Programming Language :: Python',
                     'Programming Language :: Python :: 2',
       ],
+      license='MIT',
       packages=packages,
       include_package_data=True,
       install_requires=[],
