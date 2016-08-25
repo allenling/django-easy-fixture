@@ -37,3 +37,10 @@ in template.py
 
    class MyCase(TestCase):
       fixtures = FixtureFileGen(['my.fixture.template.module'])
+
+3. todo
+-------
+
+3.1 patch manytomany
+
+3.2 FixtureFileGen.file_path defautl to app/fixtures
