@@ -21,7 +21,7 @@ in template.py
 .. code-block:: python
 
 
-   python manage.py make_fixtures template > /path/to/fixture.json
+   python manage.py make_fixtures template_module > /path/to/fixture.json
 
 1.3. done
 ~~~~~~~~~
