@@ -34,4 +34,4 @@ in template.py
    from easy_fixtures.easy_fixtures import FixtureFileGen
 
    class MyCase(TestCase):
-      fixtures = FixtureFileGen(['my.fixture.template.py'])
+      fixtures = FixtureFileGen(['my.fixture.template.module'])
