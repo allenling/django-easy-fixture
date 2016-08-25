@@ -3,7 +3,7 @@ django-easy-fixtures
 
 easy to create a django fixtures with a fixture template dict
 
-create a fixture dict that just include some field you concern, and we will help you to expand your fixture dict to a completely useful django fixture
+create a fixture dict that just include some fields you concern, and we will help you to expand your fixture dict to a completely useful django fixture
 
 1. use as command
 -----------------
