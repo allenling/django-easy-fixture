@@ -3,4 +3,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.test import TestCase
 
-# Create your tests here.
+
+class EasyFixturesTest(TestCase):
+
+    def test_fixtures(self):
+        pass
