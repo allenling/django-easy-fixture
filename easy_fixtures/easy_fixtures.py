@@ -38,15 +38,10 @@ class EasyFixture(object):
     def get_model_field_val(self, model_string):
         model = self.get_model(model_string)
         if model_string not in self.model_field_val:
-            field_val = {'requires': {}, 'unique': {}, 'unique_together': []}
-            field_val['unique_together'].extend(model._meta.unique_together)
-            for f in model._meta.fields:
-                if f.name == 'id':
-                    continue
+            field_val = {}
+            for f in [f for f in model._meta.fields if f.name != 'id']:
                 if f.null is False and f.blank is False and f.default is django_fields.NOT_PROVIDED or \
                         isinstance(f, (django_fields.DateField, django_fields.DateTimeField)):
-                    field_val['requires'][f.name] = f
-                if f.unique:
                     field_val[f.name] = f
             self.model_field_val[model_string] = field_val
         return self.model_field_val[model_string]
@@ -67,14 +62,37 @@ class EasyFixture(object):
         return timezone.now().date().strftime('%Y-%m-%d %H:%M:%S')
 
     def patch_field(self, model, data, datas, field_name, field, field_val, model_strings):
+        if field.choices:
+            data[field_name] = field.choices[0][0]
+            return
         if field.is_relation:
-            self.patch_relation(model, data, datas, field_name, field, model_strings)
+            if field.many_to_many:
+                self.patch_manytomany(model, data, datas, field_name, field, model_strings)
+            else:
+                self.patch_relation(model, data, datas, field_name, field, model_strings)
         else:
             method_name = getattr(self, 'patch_%s' % type(field).__name__, None)
             if method_name is None:
                 print type(field).__name__
                 raise StandardError('do not support this field yet')
             data[field_name] = method_name(model, data, datas, field_name, field, field_val, model_strings)
+
+    def patch_manytomany(self, model, data, datas, field_name, field, model_strings):
+        rel_model_string = '%s.%s' % (field.related_model._meta.app_label, field.related_model.__name__)
+        rel_datas = []
+        if rel_model_string not in self.fixtures:
+            self.fixtures[rel_model_string] = []
+        else:
+            rel_datas = self.fixtures[rel_model_string]
+        rel_exist_pks = [_['pk'] for _ in rel_datas]
+        if field_name not in data:
+            data[field_name] = [max(rel_exist_pks + [0]) + 1]
+        assert data[field_name] is not None
+        for rel_pk in data[field_name]:
+            if rel_pk not in rel_exist_pks:
+                self.fixtures[rel_model_string].append({'pk': rel_pk})
+                if rel_model_string not in model_strings:
+                    model_strings.append(rel_model_string)
 
     def patch_relation(self, model, data, datas, field_name, field, model_strings):
         rel_model_string = '%s.%s' % (field.related_model._meta.app_label, field.related_model.__name__)
@@ -98,7 +116,7 @@ class EasyFixture(object):
             assert 'pk' in data
             if data['pk'] in self.finish_map[model_string]:
                 continue
-            for field_name in field_val['requires']:
+            for field_name in field_val:
                 if field_name not in data:
                     self.patch_field(model, data, datas, field_name, model._meta.get_field(field_name), field_val, model_strings)
             for field_name in data:
