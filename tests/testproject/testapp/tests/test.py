@@ -5,7 +5,7 @@ import json
 from django.test import TestCase
 from django.core import serializers
 
-from easy_fixtures.easy_fixtures import EasyFixture
+from easy_fixture.easy_fixture import EasyFixture
 
 from . import fixtures_template
 

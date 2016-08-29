@@ -31,9 +31,8 @@ class Tox(test_command):
         errno = tox.cmdline(args=args)
         sys.exit(errno)
 
-packages = [
-            "easy_fixtures",
-]
+packages = ["easy_fixture",
+            ]
 
 packages = [package.encode('ascii') for package in packages]  # package should be string type when using python<=2.7.6
 
