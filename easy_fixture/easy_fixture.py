@@ -7,7 +7,8 @@ import importlib
 
 from django.db.models import fields as django_fields
 from django.apps import apps
-from django.utils import timezone
+
+from . import patch
 
 
 class EasyFixture(object):
@@ -45,75 +46,17 @@ class EasyFixture(object):
             self.model_field_val[model_string] = field_val
         return self.model_field_val[model_string]
 
-    def patch_CharField(self, model, data, datas, field_name, field, field_val, model_strings):
-        return str(max([int(i[field_name]) for i in datas if field_name in i and i[field_name].isdigit()] + [0]) + 1)
-
-    def patch_PositiveIntegerField(self, model, data, datas, field_name, field, field_val, model_strings):
-        return max([int(i[field_name]) for i in datas if field_name in i and i[field_name]] + [0]) + 1
-
-    def patch_PositiveSmallIntegerField(self, model, data, datas, field_name, field, field_val, model_strings):
-        return max([int(i[field_name]) for i in datas if field_name in i and i[field_name]] + [0]) + 1
-
-    def patch_IntegerField(self, model, data, datas, field_name, field, field_val, model_strings):
-        return max([int(i[field_name]) for i in datas if field_name in i and i[field_name]] + [0]) + 1
-
-    def patch_BigIntegerField(self, model, data, datas, field_name, field, field_val, model_strings):
-        return (max([int(i[field_name]) for i in datas if field_name in i and i[field_name]] + [0]) + 1) % django_fields.BigIntegerField.MAX_BIGINT
-
-    def patch_DateTimeField(self, model, data, datas, field_name, field, field_val, model_strings):
-        return timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    def patch_DateField(self, model, data, datas, field_name, field, field_val, model_strings):
-        return timezone.now().date().strftime('%Y-%m-%d')
-
     def patch_field(self, model, data, datas, field_name, field, field_val, model_strings):
         if field.choices:
             data[field_name] = field.choices[0][0]
             return
         if field.is_relation:
-            if field.many_to_many:
-                self.patch_manytomany(model, data, datas, field_name, field, model_strings)
-            else:
-                self.patch_relation(model, data, datas, field_name, field, model_strings)
+            patch.patch_relation(model, data, datas, field_name, field, model_strings, self.fixtures)
         else:
-            method_name = getattr(self, 'patch_%s' % type(field).__name__, None)
+            method_name = getattr(patch, 'patch_%s' % type(field).__name__, None)
             if method_name is None:
                 raise StandardError('do not support this %s field type yet' % type(field).__name__)
             data[field_name] = method_name(model, data, datas, field_name, field, field_val, model_strings)
-
-    def patch_manytomany(self, model, data, datas, field_name, field, model_strings):
-        rel_model_string = '%s.%s' % (field.related_model._meta.app_label, field.related_model.__name__)
-        rel_datas = []
-        if rel_model_string not in self.fixtures:
-            self.fixtures[rel_model_string] = []
-        else:
-            rel_datas = self.fixtures[rel_model_string]
-        rel_exist_pks = [_['pk'] for _ in rel_datas]
-        if field_name not in data:
-            data[field_name] = [max(rel_exist_pks + [0]) + 1]
-        assert data[field_name] is not None
-        for rel_pk in data[field_name]:
-            if rel_pk not in rel_exist_pks:
-                self.fixtures[rel_model_string].append({'pk': rel_pk})
-                if rel_model_string not in model_strings:
-                    model_strings.append(rel_model_string)
-
-    def patch_relation(self, model, data, datas, field_name, field, model_strings):
-        rel_model_string = '%s.%s' % (field.related_model._meta.app_label, field.related_model.__name__)
-        rel_datas = []
-        if rel_model_string not in self.fixtures:
-            self.fixtures[rel_model_string] = []
-        else:
-            rel_datas = self.fixtures[rel_model_string]
-        rel_exist_pks = [_['pk'] for _ in rel_datas]
-        if field_name not in data:
-            data[field_name] = max(rel_exist_pks + [0]) + 1
-        if data[field_name] is None:
-            return
-        if data[field_name] not in rel_exist_pks:
-            self.fixtures[rel_model_string].append({'pk': data[field_name]})
-            if rel_model_string not in model_strings:
-                model_strings.append(rel_model_string)
 
     def clean_model_data(self, model_string, model, datas, field_val, model_strings):
         for data in datas:
