@@ -1,11 +1,7 @@
 # coding=utf-8
 from __future__ import unicode_literals
 from __future__ import absolute_import
-import os
-import sys
 import json
-sys.path.append('/opt/django-easy-fixtures')
-os.environ['DJANGO_SETTINGS_MODULE'] = 'easy_fixtures.testproject.settings'
 from django.test import TestCase
 from django.core import serializers
 
@@ -19,8 +15,24 @@ class EasyFixturesTest(TestCase):
     def test_fixtures(self):
         ef = EasyFixture(fixtures_template.fixtures_template)
         deser_gens = list(serializers.deserialize('json', json.dumps(ef.output())))
+        fixture_models = sorted([i for i in deser_gens if i.object.__class__.__name__ == 'FixtureModel'], key=lambda key: key.object.pk)
+        fixture_models_datas = [{'pk': 1, 'char_field': '1', 'integer_field': 1, 'foreign_field': 2, 'many_to_many': [1, 2]},
+                                {'pk': 2, 'char_field': '2', 'integer_field': 2, 'foreign_field': 2, 'many_to_many': [3]}]
+        for data_index in range(2):
+            for f in ['pk', 'char_field', 'integer_field', 'foreign_field', 'many_to_many']:
+                self.assertEqual(getattr(fixture_models[data_index].object, f), fixture_models_datas[data_index][f])
 
+        foreign_models = sorted([i for i in deser_gens if i.object.__class__.__name__ == 'FixtureForeignModel'], key=lambda key: key.object.pk)
+        foreign_models_datas = [{'pk': 1, 'postive_integer': 1, 'postive_small_integer': 1},
+                                {'pk': 2, 'postive_integer': 2, 'postive_small_integer': 2}]
+        for data_index in range(2):
+            for f in ['pk', 'postive_integer', 'postive_small_integer']:
+                self.assertEqual(getattr(foreign_models[data_index].object, f), foreign_models_datas[data_index][f])
 
-if __name__ == '__main__':
-    from django.core.management import execute_from_command_line
-    execute_from_command_line(['manage.py', 'test', 'easy_fixtures.tests.%s' % os.path.basename(__file__).split('.')[0]])
+        manytomany_models = sorted([i for i in deser_gens if i.object.__class__.__name__ == 'FixtureManyToManyModel'], key=lambda key: key.object.pk)
+        manytomany_models_datas = [{'pk': 1, 'biginteger_field': 3},
+                                   {'pk': 2, 'biginteger_field': 4},
+                                   {'pk': 3, 'biginteger_field': 5}]
+        for data_index in range(3):
+            for f in ['pk', 'biginteger_field']:
+                self.assertEqual(getattr(manytomany_models[data_index].object, f), manytomany_models_datas[data_index][f])

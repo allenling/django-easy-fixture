@@ -52,8 +52,14 @@ class EasyFixture(object):
     def patch_PositiveIntegerField(self, model, data, datas, field_name, field, field_val, model_strings):
         return max([int(i[field_name]) for i in datas if field_name in i and i[field_name]] + [0]) + 1
 
+    def patch_PositiveSmallIntegerField(self, model, data, datas, field_name, field, field_val, model_strings):
+        return max([int(i[field_name]) for i in datas if field_name in i and i[field_name]] + [0]) + 1
+
     def patch_IntegerField(self, model, data, datas, field_name, field, field_val, model_strings):
         return max([int(i[field_name]) for i in datas if field_name in i and i[field_name]] + [0]) + 1
+
+    def patch_BigIntegerField(self, model, data, datas, field_name, field, field_val, model_strings):
+        return (max([int(i[field_name]) for i in datas if field_name in i and i[field_name]] + [0]) + 1) % django_fields.BigIntegerField.MAX_BIGINT
 
     def patch_DateTimeField(self, model, data, datas, field_name, field, field_val, model_strings):
         return timezone.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -73,8 +79,7 @@ class EasyFixture(object):
         else:
             method_name = getattr(self, 'patch_%s' % type(field).__name__, None)
             if method_name is None:
-                print type(field).__name__
-                raise StandardError('do not support this field yet')
+                raise StandardError('do not support this %s field type yet' % type(field).__name__)
             data[field_name] = method_name(model, data, datas, field_name, field, field_val, model_strings)
 
     def patch_manytomany(self, model, data, datas, field_name, field, model_strings):
@@ -140,7 +145,7 @@ class EasyFixture(object):
     def output(self):
         model_strings = self.fixtures.keys()
         while model_strings:
-            model_string = model_strings.pop()
+            model_string = list(model_strings).pop()
             datas = self.fixtures.get(model_string, [])
             model = self.get_model(model_string)
             field_val = self.get_model_field_val(model_string)
