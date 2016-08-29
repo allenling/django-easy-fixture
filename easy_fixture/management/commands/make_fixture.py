@@ -6,7 +6,7 @@ import json
 
 from django.core.management.base import BaseCommand
 
-from easy_fixtures.easy_fixtures import EasyFixture
+from easy_fixture.easy_fixture import EasyFixture
 
 
 class Command(BaseCommand):
