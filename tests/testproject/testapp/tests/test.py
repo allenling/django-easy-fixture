@@ -44,7 +44,3 @@ class EasyFixturesTest(TestCase):
         for data_index in range(2):
             for f in ['pk', 'biginteger_field']:
                 self.assertEqual(getattr(manytomany_models[data_index].object, f), manytomany_models_datas[data_index][f])
-
-if __name__ == '__main__':
-    from django.core.management import execute_from_command_line
-    execute_from_command_line(['manage.py', 'test', 'testapp.tests.test'])
