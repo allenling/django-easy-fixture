@@ -16,6 +16,6 @@ INSTALLED_APPS = ('django.contrib.auth',
                   'django.contrib.messages',
                   'django.contrib.staticfiles',
                   'django.contrib.sites',
-                  'easy_fixtures'
+                  'testapp'
                   )
 MIGRATION_MODULES = {}

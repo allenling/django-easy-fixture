@@ -17,9 +17,18 @@ in template.py
 
    fixtures_template={'auth.User': [{'pk': 1}]}
 
-1.2. create a full fixture
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+1.2. in settings.py
+~~~~~~~~~~~~~~~~~~~
 
+.. code-block:: python
+
+   INSTALLED_APPS = ('other apps',
+                     'easy_fixtures',
+                     )
+
+1.3. run command
+~~~~~~~~~~~~~~~~
+ 
 .. code-block:: python
 
 
@@ -37,10 +46,3 @@ in template.py
 
    class MyCase(TestCase):
       fixtures = FixtureFileGen(['my.fixture.template.module'])
-
-3. todo
--------
-
-3.1 patch manytomany
-
-3.2 FixtureFileGen.file_path defautl to app/fixtures

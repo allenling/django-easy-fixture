@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from collections import defaultdict
-import json
 import os
 import importlib
 
@@ -65,7 +64,7 @@ class EasyFixture(object):
         return timezone.now().strftime('%Y-%m-%d %H:%M:%S')
 
     def patch_DateField(self, model, data, datas, field_name, field, field_val, model_strings):
-        return timezone.now().date().strftime('%Y-%m-%d %H:%M:%S')
+        return timezone.now().date().strftime('%Y-%m-%d')
 
     def patch_field(self, model, data, datas, field_name, field, field_val, model_strings):
         if field.choices:
@@ -128,24 +127,25 @@ class EasyFixture(object):
                 if field_name == 'pk':
                     continue
                 field = model._meta.get_field(field_name)
-                if field.is_relation:
-                    self.patch_relation(model, data, datas, field_name, field, model_strings)
+                if field.is_relation and field_name not in field_val:
+                    self.patch_field(model, data, datas, field_name, field, field_val, model_strings)
             self.finish_map[model_string].append(data['pk'])
 
     def return_complete_fixtures(self):
         fixtures_data = []
-        for model_string, datas in self.fixtures.iteritems():
+        for model_string in self.fixtures:
+            datas = self.fixtures[model_string]
             app_name, model_name = model_string.split('.')
             model_str = '%s.%s' % (app_name, model_name.lower())
             for data in datas:
                 pk = data.pop('pk')
                 fixtures_data.append({'model': model_str, 'pk': pk, 'fields': data})
-        return json.dumps(fixtures_data)
+        return fixtures_data
 
     def output(self):
-        model_strings = self.fixtures.keys()
+        model_strings = list(self.fixtures.keys())
         while model_strings:
-            model_string = list(model_strings).pop()
+            model_string = model_strings.pop()
             datas = self.fixtures.get(model_string, [])
             model = self.get_model(model_string)
             field_val = self.get_model_field_val(model_string)
