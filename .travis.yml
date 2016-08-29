@@ -1,0 +1,22 @@
+language: python
+
+matrix:
+  include:
+  - python: "3.5"
+    env: TOX_ENV=py35-django184
+  - python: "3.5"
+    env: TOX_ENV=py35-django199
+  - python: "3.5"
+    env: TOX_ENV=py35-django110
+  - python: "2.7"
+    env: TOX_ENV=py27-django184
+  - python: "2.7"
+    env: TOX_ENV=py27-django199
+  - python: "2.7"
+    env: TOX_ENV=py27-django110
+
+install:
+  - pip install tox
+
+script:
+  - tox -e $TOX_ENV
