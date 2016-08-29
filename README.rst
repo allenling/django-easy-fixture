@@ -1,6 +1,8 @@
 django-easy-fixture
 ===================
 
+Django>=1.8
+
 easy to create a django fixtures with a fixture dict
 
 create a fixture dict that just include some fields you concern, and we will help you to expand your fixture dict to a completely available django fixture
