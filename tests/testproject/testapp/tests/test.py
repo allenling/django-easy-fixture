@@ -2,13 +2,6 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 import json
-import os
-import sys
-sys.path.append('/opt/django-easy-fixtures/tests')
-sys.path.append('/opt/django-easy-fixtures/tests/testproject')
-import django
-os.environ['DJANGO_SETTINGS_MODULE'] = 'testproject.settings'
-django.setup()
 from django.test import TestCase
 from django.core import serializers
 
