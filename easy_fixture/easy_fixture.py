@@ -53,10 +53,10 @@ class EasyFixture(object):
         if field.is_relation:
             patch.patch_relation(model, data, datas, field_name, field, model_strings, self.fixtures)
         else:
-            method_name = getattr(patch, 'patch_%s' % type(field).__name__, None)
-            if method_name is None:
+            patch_function = getattr(patch, 'patch_%s' % type(field).__name__, None)
+            if patch_function is None:
                 raise StandardError('do not support this %s field type yet' % type(field).__name__)
-            data[field_name] = method_name(model, data, datas, field_name, field, field_val, model_strings)
+            patch_function(model, data, datas, field_name, field, field_val, model_strings)
 
     def clean_model_data(self, model_string, model, datas, field_val, model_strings):
         for data in datas:

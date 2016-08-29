@@ -11,31 +11,38 @@ def get_field_max_plus_value(field_name, datas):
 
 
 def patch_CharField(model, data, datas, field_name, field, field_val, model_strings):
-    return get_field_max_plus_value(field_name, datas)
+    data[field_name] = get_field_max_plus_value(field_name, datas)
+    return
 
 
 def patch_PositiveIntegerField(model, data, datas, field_name, field, field_val, model_strings):
-    return get_field_max_plus_value(field_name, datas)
+    data[field_name] = get_field_max_plus_value(field_name, datas)
+    return
 
 
 def patch_PositiveSmallIntegerField(model, data, datas, field_name, field, field_val, model_strings):
-    return get_field_max_plus_value(field_name, datas)
+    data[field_name] = get_field_max_plus_value(field_name, datas)
+    return
 
 
 def patch_IntegerField(model, data, datas, field_name, field, field_val, model_strings):
-    return get_field_max_plus_value(field_name, datas)
+    data[field_name] = get_field_max_plus_value(field_name, datas)
+    return
 
 
 def patch_BigIntegerField(model, data, datas, field_name, field, field_val, model_strings):
-    return get_field_max_plus_value(field_name, datas) % django_fields.BigIntegerField.MAX_BIGINT
+    data[field_name] = get_field_max_plus_value(field_name, datas) % django_fields.BigIntegerField.MAX_BIGINT
+    return
 
 
 def patch_DateTimeField(model, data, datas, field_name, field, field_val, model_strings):
-    return timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    data[field_name] = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+    return
 
 
 def patch_DateField(model, data, datas, field_name, field, field_val, model_strings):
-    return timezone.now().date().strftime('%Y-%m-%d')
+    data[field_name] = timezone.now().date().strftime('%Y-%m-%d')
+    return
 
 
 def patch_manytomany(model, data, datas, field_name, field, model_strings, fixtures):
@@ -54,6 +61,7 @@ def patch_manytomany(model, data, datas, field_name, field, model_strings, fixtu
             fixtures[rel_model_string].append({'pk': rel_pk})
             if rel_model_string not in model_strings:
                 model_strings.append(rel_model_string)
+    return
 
 
 def patch_relation(model, data, datas, field_name, field, model_strings, fixtures):
@@ -75,3 +83,4 @@ def patch_relation(model, data, datas, field_name, field, model_strings, fixture
         fixtures[rel_model_string].append({'pk': data[field_name]})
         if rel_model_string not in model_strings:
             model_strings.append(rel_model_string)
+    return
