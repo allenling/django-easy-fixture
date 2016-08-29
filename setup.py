@@ -59,5 +59,5 @@ setup(
       include_package_data=True,
       tests_require=['tox'],
       cmdclass={'test': Tox},
-      install_requires=[],
+      install_requires=['Django >= 1.7',],
 )
