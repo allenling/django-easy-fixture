@@ -1,5 +1,5 @@
-django-easy-fixtures
-====================
+django-easy-fixture
+===================
 
 easy to create a django fixtures with a fixture dict
 
