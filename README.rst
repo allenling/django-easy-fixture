@@ -1,5 +1,6 @@
 django-easy-fixture
 ===================
+.. figure:: https://travis-ci.org/allenling/django-easy-fixture.svg?branch=master
 
 Django>=1.8
 
