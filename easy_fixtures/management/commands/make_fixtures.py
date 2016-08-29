@@ -13,7 +13,7 @@ class Command(BaseCommand):
     help = 'create a available fixture with a simple model dict'
 
     def add_arguments(self, parser):
-        parser.add_argument('template', help='fixture module file path')
+        parser.add_argument('template', help='fixture module path')
 
     def handle(self, *args, **options):
         tem = importlib.import_module(options['template'])
