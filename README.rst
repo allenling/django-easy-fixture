@@ -6,7 +6,7 @@ easy to create a django fixtures with a fixture dict
 create a fixture dict that just include some fields you concern, and we will help you to expand your fixture dict to a completely available django fixture
 
 1. output a fixture dict
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
 
 in template.py
 
@@ -24,8 +24,8 @@ then
    ef = EasyFixture(fixtures_template)
    fixtures_dict = ef.output()
 
-2. use as command
------------------
+2. use as a django app command
+------------------------------
 
 2.1. create a simple fixture template
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
