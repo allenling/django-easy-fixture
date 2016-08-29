@@ -18,7 +18,7 @@ then
 
 .. code-block:: python
 
-   from easy_fixtures.easy_fixtures import EasyFixture
+   from easy_fixture.easy_fixture import EasyFixture
    from template import fixtures_template
 
    ef = EasyFixture(fixtures_template)
@@ -42,7 +42,7 @@ in template.py
 .. code-block:: python
 
    INSTALLED_APPS = ('other apps',
-                     'easy_fixtures',
+                     'easy_fixture',
                      )
 
 2.3. run command
@@ -51,14 +51,14 @@ in template.py
 .. code-block:: python
 
 
-   python manage.py make_fixtures template > /path/to/fixture.json
+   python manage.py make_fixture template > /path/to/fixture.json
 
 3. use in test
 --------------
 
 .. code-block:: python
 
-   from easy_fixtures.easy_fixtures import FixtureFileGen
+   from easy_fixture.easy_fixture import FixtureFileGen
 
    class MyCase(TestCase):
       fixtures = FixtureFileGen(['my.fixture.template.module'])
