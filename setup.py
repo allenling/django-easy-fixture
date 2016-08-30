@@ -37,11 +37,12 @@ packages = ["easy_fixture",
 packages = [package.encode('ascii') for package in packages]  # package should be string type when using python<=2.7.6
 
 setup(
-      name="django-easy-fixtures",
+      name="django-easy-fixture",
       version=version,
       author="allenling",
       author_email="allenling3@gmail.com",
-      url="git@github.com:allenling/django-easy-fixture.git",
+      description="easy to create a django fixture",
+      url="https://github.com/allenling/django-easy-fixture",
       classifiers=[
                     'Development Status :: 4 - Beta',
                     'Environment :: Web Environment',
