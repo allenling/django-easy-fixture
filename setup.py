@@ -58,6 +58,7 @@ setup(
       ],
       license='MIT',
       packages=packages,
+      keywords='fixture, django',
       include_package_data=True,
       tests_require=['tox'],
       cmdclass={'test': Tox},
