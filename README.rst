@@ -2,11 +2,12 @@ django-easy-fixture
 ===================
 .. figure:: https://travis-ci.org/allenling/django-easy-fixture.svg?branch=master
 
-Django>=1.8
+for python2.7, python3.5 and Django>=1.8
 
 easy to create a django fixtures with a fixture dict
 
-create a fixture dict that just include some fields you concern, and we will help you to expand your fixture dict to a completely available django fixture
+create a fixture dict that just include some fields you concern, and we will help you to fill your fixture dict with some spam datas that
+make your fixture dict to be a completely available django fixture
 
 1. output a fixture dict
 ------------------------
