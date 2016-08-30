@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from setuptools import setup
 
-version = "0.1.1"
+version = "0.1.2"
 
 from setuptools.command.test import test as test_command
 import sys
@@ -56,6 +56,7 @@ setup(
                     'Programming Language :: Python',
                     'Programming Language :: Python :: 2',
                     'Programming Language :: Python :: 2.7',
+                    'Programming Language :: Python :: 3.5',
       ],
       license='MIT',
       packages=packages,
