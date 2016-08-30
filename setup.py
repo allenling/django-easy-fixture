@@ -41,7 +41,7 @@ setup(
       version=version,
       author="allenling",
       author_email="allenling3@gmail.com",
-      url="git@github.com:allenling/django-easy-fixtures.git",
+      url="git@github.com:allenling/django-easy-fixture.git",
       classifiers=[
                     'Development Status :: 4 - Beta',
                     'Environment :: Web Environment',
