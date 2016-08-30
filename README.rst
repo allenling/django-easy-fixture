@@ -4,8 +4,6 @@ django-easy-fixture
 
 for python2.7, python3.5 and Django>=1.8
 
-easy to create a django fixtures with a fixture dict
-
 create a fixture dict that just include some fields you concern, and we will help you to fill your fixture dict with some spam datas that
 make your fixture dict to be a completely available django fixture
 
