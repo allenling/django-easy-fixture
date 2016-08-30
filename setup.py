@@ -43,7 +43,7 @@ setup(
       author_email="allenling3@gmail.com",
       url="git@github.com:allenling/django-easy-fixtures.git",
       classifiers=[
-                    'Development Status :: 3 - Alpha',
+                    'Development Status :: 4 - Beta',
                     'Environment :: Web Environment',
                     'Intended Audience :: Developers',
                     'Framework :: Django',
