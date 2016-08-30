@@ -41,7 +41,7 @@ class EasyFixture(object):
             field_val = {}
             for f in [f for f in model._meta.fields if f.name != 'id']:
                 if f.null is False and f.blank is False and f.default is django_fields.NOT_PROVIDED or \
-                        isinstance(f, (django_fields.DateField, django_fields.DateTimeField)):
+                          (f.blank is True and f.default is django_fields.NOT_PROVIDED):
                     field_val[f.name] = f
             self.model_field_val[model_string] = field_val
         return self.model_field_val[model_string]
