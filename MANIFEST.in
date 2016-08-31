@@ -4,4 +4,3 @@ include README.rst
 include tox.ini
 recursive-include tests *
 recursive-include easy_fixture *.py
-global-exclude *pyc
