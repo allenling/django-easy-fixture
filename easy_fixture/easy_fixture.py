@@ -40,8 +40,10 @@ class EasyFixture(object):
         if model_string not in self.model_field_val:
             field_val = {}
             for f in [f for f in model._meta.fields if f.name != 'id']:
+                if f.null is True and f.blank is True:
+                    continue
                 if f.null is False and f.blank is False and f.default is django_fields.NOT_PROVIDED or \
-                          (f.blank is True and f.default is django_fields.NOT_PROVIDED):
+                        (f.blank is True and f.default is django_fields.NOT_PROVIDED):
                     field_val[f.name] = f
             self.model_field_val[model_string] = field_val
         return self.model_field_val[model_string]
