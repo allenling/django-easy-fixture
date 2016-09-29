@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from setuptools import setup
 
-version = "0.1.4"
+version = "0.2.0"
 
 from setuptools.command.test import test as test_command
 import sys
