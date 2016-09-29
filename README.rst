@@ -5,14 +5,14 @@ django-easy-fixture
 for python2.7, python3.5 and Django>=1.8
 
 Create a fixture dict that just include some fields you concern, and we will help you to fill your fixture dict with some spam datas that
-make your fixture dict to be a completely available django fixture that *you do not have to worry about any unqiue, unqie_together*
+make your fixture dict to be a completely available django fixture that **you do not have to worry about any unqiue, unqie_together**
 
 install: pip install django-easy-fixture
 
 1. output a fixture dict
 ------------------------
 
-*pk must be set by yourself*
+**pk must be set by yourself**
 
 in template.py
 
@@ -38,7 +38,7 @@ then
 
 in template.py
 
-*pk must be set by yourself*
+**pk must be set by yourself**
 
 .. code-block:: python
 
