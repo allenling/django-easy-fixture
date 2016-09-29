@@ -27,6 +27,8 @@ class FixtureManyToManyModel(models.Model):
 
 
 class FixtureModel(models.Model):
+    unique_together_char_field_one = models.CharField(max_length=20, default='')
+    unique_together_char_field_two = models.CharField(max_length=20, default='')
     char_field = models.CharField(max_length=20)
     integer_field = models.IntegerField()
     dete_field = models.DateField()
@@ -38,4 +40,4 @@ class FixtureModel(models.Model):
     many_to_many = models.ManyToManyField(FixtureManyToManyModel)
 
     class Meta(object):
-        unique_together = (('char_field', 'foreign_field'))
+        unique_together = (('char_field', 'foreign_field'), ('unique_together_char_field_one', 'unique_together_char_field_two'))

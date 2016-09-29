@@ -37,6 +37,11 @@ class EasyFixture(object):
 
     def get_model_field_val(self, model_string):
         model = self.get_model(model_string)
+        # field in unique_together should be set too
+        unique_togethers = []
+        for unique_together in model._meta.unique_together:
+            unique_togethers.extend(list(unique_together))
+        unique_togethers = set(unique_togethers)
         if model_string not in self.model_field_val:
             field_val = {}
             for f in [f for f in model._meta.fields if f.name != 'id']:
@@ -44,6 +49,9 @@ class EasyFixture(object):
                     continue
                 if f.null is False and f.blank is False and f.default is django_fields.NOT_PROVIDED or \
                         (f.blank is True and f.default is django_fields.NOT_PROVIDED):
+                    field_val[f.name] = f
+                    continue
+                if f.name in unique_togethers:
                     field_val[f.name] = f
             self.model_field_val[model_string] = field_val
         return self.model_field_val[model_string]

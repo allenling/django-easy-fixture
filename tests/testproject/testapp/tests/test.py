@@ -2,9 +2,17 @@
 from __future__ import unicode_literals
 from __future__ import absolute_import
 import json
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+
+import django
+
+django.setup()
+
 from django.test import TestCase
 from django.core import serializers
-from django.utils import timezone
 
 from easy_fixture.easy_fixture import EasyFixture
 
@@ -23,12 +31,19 @@ class EasyFixturesTest(TestCase):
         foreign_models = sorted([i for i in deser_gens if i.object.__class__.__name__ == 'FixtureForeignModel'], key=lambda key: key.object.pk)
         manytomany_models = sorted([i for i in deser_gens if i.object.__class__.__name__ == 'FixtureManyToManyModel'], key=lambda key: key.object.pk)
 
-        fixture_models_datas = [{'pk': 1, 'char_field': '1', 'integer_field': 2, 'url': '1', 'bin': '1', 'foreign_field': 1, 'many_to_many': [1, 2]},
-                                {'pk': 2, 'char_field': '2', 'integer_field': 1, 'url': '2', 'bin': '2', 'foreign_field': 2, 'many_to_many': []}]
+        fixture_models_datas = [{'info': {'pk': 1, 'char_field': '1', 'integer_field': 2, 'url': '1',
+                                          'unique_together_char_field_one': '1',
+                                          'unique_together_char_field_two': '1'},
+                                 'foreign_field': 1, 'many_to_many': [1, 2], 'bin': '1'
+                                 },
+                                {'info': {'pk': 2, 'char_field': '2', 'integer_field': 1, 'url': '2',
+                                          'unique_together_char_field_one': '2', 'unique_together_char_field_two': '2'},
+                                 'foreign_field': 2, 'many_to_many': [], 'bin': '2'
+                                 }]
 
         for data_index in range(2):
-            for f in ['pk', 'char_field', 'integer_field', 'url']:
-                self.assertEqual(str(getattr(fixture_models[data_index].object, f)), str(fixture_models_datas[data_index][f]))
+            for i in fixture_models_datas[data_index]['info']:
+                self.assertEqual(str(getattr(fixture_models[data_index].object, i)), str(fixture_models_datas[data_index]['info'][i]))
             for rel in ['foreign_field']:
                 self.assertEqual(getattr(fixture_models[data_index].object, rel).pk, fixture_models_datas[data_index][rel])
             for m2m in ['many_to_many']:
@@ -52,3 +67,7 @@ class EasyFixturesTest(TestCase):
         for data_index in range(2):
             for f in ['pk', 'biginteger_field', 'boolean_field', 'non_boolean_field', 'comma_sep_field', 'duration_field', 'email']:
                 self.assertEqual(str(getattr(manytomany_models[data_index].object, f)), str(manytomany_models_datas[data_index][f]))
+
+if __name__ == '__main__':
+    from django.core.management import execute_from_command_line
+    execute_from_command_line(['manage.py', 'test', 'testapp.tests.%s' % os.path.basename(__file__).split('.')[0]])
