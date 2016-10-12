@@ -80,7 +80,8 @@ class EasyFixture(object):
                 if field_name == 'pk':
                     continue
                 field = model._meta.get_field(field_name)
-                if field.is_relation and field_name not in field_val:
+                # clean all relation field
+                if field.is_relation:
                     self.patch_field(model, data, datas, field_name, field, field_val, model_strings)
             self.finish_map[model_string].append(data['pk'])
 
