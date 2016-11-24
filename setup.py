@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from setuptools import setup
 
-version = "0.2.1"
+version = "0.3.0"
 
 from setuptools.command.test import test as test_command
 import sys
@@ -64,5 +64,5 @@ setup(
       include_package_data=True,
       tests_require=['tox'],
       cmdclass={'test': Tox},
-      install_requires=['Django >= 1.8'],
+      install_requires=['Django >= 1.8,<1.10'],
 )

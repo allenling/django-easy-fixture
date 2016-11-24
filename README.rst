@@ -14,6 +14,11 @@ Make your fixture dict to be a completely available django fixture that **you do
 
 **The pk must be defined by you!**
 
+**Just support the field defined by django, and do not support your customization field.** 
+
+**Maybe** support any customization field.
+
+
 
 1. get a fixture dict
 ---------------------
@@ -36,7 +41,7 @@ Make your fixture dict to be a completely available django fixture that **you do
 .. code-block:: python
 
    # in template.py
-   fixtures_template={'auth.User': [{'pk': 1}]}
+   fixtures_template = {'auth.User': [{'pk': 1}]}
 
    # in your settings.py
    INSTALLED_APPS = ('other apps',
@@ -46,14 +51,24 @@ run make_fixture command
  
 .. code-block:: python
 
+   python manage.py make_fixture template.fixtures_template > /path/to/fixture.json
+
+Must pass the module path and fixture variable, like module.to.fixture.Variable_name
+
+**do not support old style**
+
+.. code-block:: python
+
    python manage.py make_fixture template > /path/to/fixture.json
 
 3. use in test
 --------------
 
-In your testCase, call EasyFixture.load_into_testcase in your setUpTestData, setUpClass or setUp.
+In your testCase, call EasyFixture.load_into_testcase in your setUpTestData, setUpClass, setUp or anywhere you want to load your fixture data. 
 
 .. code-block:: python
+
+   FIXTURE_DICT = {'auth.User': [{'pk': 1}]}
 
    class MyTestCase(TestCase):
        
