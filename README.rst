@@ -16,7 +16,7 @@ Make your fixture dict to be a completely available django fixture that **you do
 
 **Just support all the fields defined by Django, and do not support any customization field.** 
 
-**Maybe** support any customization field.
+**Maybe** support the customization field in future.
 
 
 
