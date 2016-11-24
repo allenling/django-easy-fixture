@@ -14,7 +14,7 @@ Make your fixture dict to be a completely available django fixture that **you do
 
 **The pk must be defined by you!**
 
-**Just support the field defined by django, and do not support your customization field.** 
+**Just support all the fields defined by Django, and do not support any customization field.** 
 
 **Maybe** support any customization field.
 
