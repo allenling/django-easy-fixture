@@ -1,12 +1,13 @@
 # coding=utf-8
-from __future__ import unicode_literals
-from __future__ import absolute_import
 from collections import defaultdict
+import tempfile
+import json
 import os
 import importlib
 
 from django.db.models import fields as django_fields
 from django.apps import apps
+from django.core.management.commands import loaddata
 
 from . import patch
 
@@ -105,6 +106,20 @@ class EasyFixture(object):
             field_val = self.get_model_field_val(model_string)
             self.clean_model_data(model_string, model, datas, field_val, model_strings)
         return self.return_complete_fixtures()
+
+    def load_into_testcase(self, ignore=False, database='default', app_label=None, verbosity=1):
+        with tempfile.NamedTemporaryFile('r+') as tempf:
+            fixture_data = self.output()
+            fixture_name = tempf.name + '.json'
+            os.rename(tempf.name, fixture_name)
+            tempf.name = fixture_name
+            json.dump(fixture_data, tempf.file)
+            # for py3.5
+            if getattr(tempf, '_closer', None):
+                tempf._closer.name = fixture_name
+            tempf.file.seek(0)
+            loaddata_command = loaddata.Command()
+            loaddata_command.handle(tempf.name, ignore=ignore, database=database, app_label=app_label, verbosity=verbosity)
 
 
 class FixtureFileGen(object):
