@@ -19,7 +19,6 @@ Make your fixture dict to be a completely available django fixture that **you do
 **Maybe** support the customization field in the future.
 
 
-
 1. get a fixture dict
 ---------------------
 
@@ -90,3 +89,34 @@ In your testCase, call EasyFixture.load_into_testcase in your setUpTestData, set
 
    class MyCase(TestCase):
       fixtures = FixtureFileGen(['my.fixture.template.module'])
+
+4. how to loaddata to db
+------------------------
+
+Creating a temp file, and call loaddata command for now.
+
+And, maybe we could simply
+
+1. disable database constraint check
+
+2. call serializers.deserialize to deserialize fixture datas, and save all objects
+
+3. check constraint after we have save all objects 
+
+4. finally, reset database sequence
+
+.. code-block:: python
+
+   # disable database constraint check
+   with connection.constraint_checks_disabled():
+       # save objects
+       objects = serializers.deserialize(ser_fmt, fixture_data, using=self.using, ignorenonexistent=self.ignore)
+       for obj in objects:
+           obj.save()
+   
+   # check constraints
+   connection.check_constraints(table_names=table_names)
+   
+   # reset sequence
+   sequence_sql = connection.ops.sequence_reset_sql(no_style(), self.models)
+
