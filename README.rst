@@ -82,7 +82,7 @@ In your testCase, call EasyFixture.load_into_testcase in your setUpTestData, set
            pass
 
 
-**deprecate**
+**deprecated**
 
 .. code-block:: python
 
