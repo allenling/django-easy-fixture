@@ -1,146 +1,220 @@
-# coding=utf-8
-from collections import defaultdict
-import tempfile
+import base64
+import uuid
 import json
-import os
-import importlib
+from collections import defaultdict
 
 from django.db.models import fields as django_fields
 from django.apps import apps
-from django.core.management.commands import loaddata
+from django.utils import timezone
 
-from . import patch
+from easy_fixture.fixture_command import save_to_db
+
+DATETIME_NOW = timezone.now()
+DATE_NOW = DATETIME_NOW.date()
 
 
-class EasyFixture(object):
+class WrapFileFixture:
+
+    def __init__(self, data):
+        self.data = data
+        return
+
+    def close(self):
+        return
+
+
+def get_next_datetime(delta_second):
+    return str(DATETIME_NOW + timezone.timedelta(seconds=delta_second))
+
+
+def get_next_date(delta_day):
+    return str(DATE_NOW + timezone.timedelta(days=delta_day))
+
+
+def field_to_bin(next_bin):
+    return (base64.encodebytes(next_bin.encode())).decode()
+
+
+def get_next_time(delta_second):
+    return (DATETIME_NOW + timezone.timedelta(seconds=delta_second)).strftime('%H:%M:%S.%fZ')
+
+
+def field_to_uuid(next_value):
+    return uuid.uuid1().hex
+
+
+def get_bool(next_value):
+    return True if next_value % 2 == 0 else False
+
+
+class EasyFixture:
 
     def __init__(self, fixtures):
-        self.initial_fixtures(fixtures)
-        self.finish_map = defaultdict(list)
-        self.model_field_val = {}
-        self.models = {}
+        '''
+        fixtures = {auth.User: {'pk1': {field1: 'field1', ...},
+                                'pk2': {field2: 'field2', ...},
+                                },
+                    }
+        '''
+        self.fixtures = fixtures
+        self.cached_app_model = {}
+        self.module_model_data = {}
+        return
 
-    def initial_fixtures(self, fixtures):
-        self.fixtures = {}
-        for fixture in fixtures:
-            self.fixtures[fixture] = []
-            for data in fixtures[fixture]:
-                tmp = {}
-                tmp.update(data)
-                self.fixtures[fixture].append(tmp)
-
-    def get_model(self, model_string):
-        if model_string not in self.models:
-            app_name, model_name = model_string.split('.')
-            app_config = apps.get_app_config(app_name)
-            self.models[model_string] = app_config.get_model(model_name)
-        return self.models[model_string]
-
-    def get_model_field_val(self, model_string):
-        model = self.get_model(model_string)
-        # field in unique_together should be set too
-        unique_togethers = []
-        for unique_together in model._meta.unique_together:
-            unique_togethers.extend(list(unique_together))
-        unique_togethers = set(unique_togethers)
-        if model_string not in self.model_field_val:
-            field_val = {}
-            for f in [f for f in model._meta.fields if f.name != 'id']:
-                if f.null is True and f.blank is True:
-                    continue
-                if f.null is False and f.blank is False and f.default is django_fields.NOT_PROVIDED or \
-                        (f.blank is True and f.default is django_fields.NOT_PROVIDED):
-                    field_val[f.name] = f
-                    continue
-                if f.name in unique_togethers:
-                    field_val[f.name] = f
-            self.model_field_val[model_string] = field_val
-        return self.model_field_val[model_string]
-
-    def patch_field(self, model, data, datas, field_name, field, field_val, model_strings):
-        if field.choices:
-            data[field_name] = field.choices[0][0]
-            return
-        if field.is_relation:
-            patch.patch_relation(model, data, datas, field_name, field, model_strings, self.fixtures)
-        else:
-            patch_function = getattr(patch, 'patch_%s' % type(field).__name__, None)
-            if patch_function is None:
-                raise StandardError('do not support this %s field type yet' % type(field).__name__)
-            patch_function(model, data, datas, field_name, field, field_val, model_strings)
-
-    def clean_model_data(self, model_string, model, datas, field_val, model_strings):
-        for data in datas:
-            assert 'pk' in data
-            if data['pk'] in self.finish_map[model_string]:
+    def get_model_necessary_fields(self, model_object):
+        fields = {}
+        fkey = {}
+        many_key = {}
+        uq_togethers = []
+        model_meta = model_object._meta
+        for uq in model_meta.unique_together:
+            uq_togethers.extend(uq)
+        uq_togethers = set(uq_togethers)
+        for f in model_meta.get_fields():
+            if isinstance(f, django_fields.reverse_related.ManyToOneRel):
                 continue
-            for field_name in field_val:
-                if field_name not in data:
-                    self.patch_field(model, data, datas, field_name, model._meta.get_field(field_name), field_val, model_strings)
-            for field_name in data:
-                if field_name == 'pk':
+            if isinstance(f, django_fields.reverse_related.ManyToManyRel):
+                continue
+            fname = f.name
+            if f.remote_field is not None:
+                frelated_model_meta = f.related_model._meta
+                key = '%s.%s' % (frelated_model_meta.app_label, frelated_model_meta.model.__qualname__)
+                if f.remote_field.__class__.__name__ == 'ManyToOneRel':
+                    fkey[fname] = key
+                elif f.remote_field.__class__.__name__ == 'ManyToManyRel':
+                    many_key[fname] = key
                     continue
-                field = model._meta.get_field(field_name)
-                # clean all relation field
-                if field.is_relation:
-                    self.patch_field(model, data, datas, field_name, field, field_val, model_strings)
-            self.finish_map[model_string].append(data['pk'])
+            if f.null is True and f.blank is True and fname not in uq_togethers:
+                continue
+            fields[fname] = f
+        del fields['id']
+        return {'fields': fields, 'fkey': fkey, 'many_key': many_key}
 
-    def return_complete_fixtures(self):
-        fixtures_data = []
-        for model_string in self.fixtures:
-            datas = self.fixtures[model_string]
-            app_name, model_name = model_string.split('.')
-            model_str = '%s.%s' % (app_name, model_name.lower())
-            for data in datas:
-                pk = data.pop('pk')
-                fixtures_data.append({'model': model_str, 'pk': pk, 'fields': data})
-        return fixtures_data
+    def get_model_fs(self, module_model, cached_app_model):
+        app_name, model_name = module_model.split('.')
+        cached_app = cached_app_model.get(app_name, None)
+        if cached_app is None:
+            cached_app = {'app_config': apps.get_app_config(app_name)}
+            cached_app_model[app_name] = cached_app
+        model_fs = cached_app.get(model_name, None)
+        if model_fs is None:
+            model_object = cached_app['app_config'].get_model(model_name)
+            model_fs = self.get_model_necessary_fields(model_object)
+            cached_app[model_name] = model_fs
+        return model_fs
 
-    def output(self):
-        model_strings = list(self.fixtures.keys())
-        while model_strings:
-            model_string = model_strings.pop()
-            datas = self.fixtures.get(model_string, [])
-            model = self.get_model(model_string)
-            field_val = self.get_model_field_val(model_string)
-            self.clean_model_data(model_string, model, datas, field_val, model_strings)
-        return self.return_complete_fixtures()
+    def get_model_data(self, module_model, model_value, model_fs, module_model_data):
+        md = module_model_data.get(module_model, None)
+        fields = model_fs['fields']
+        many_key = model_fs['many_key']
+        fkey = model_fs['fkey']
+        if md is None:
+            md = {i: 0 for i in fields}
+            module_model_data[module_model] = md
+        data = {**model_value}
+        exist_field = set(data.keys())
+        relations = []
+        lefted_keys = set(fields.keys()) - exist_field
+        for f in lefted_keys:
+            next_value = md[f] + 1
+            ffield = fields[f]
+            md[f] = next_value
+            if ffield.__class__.__qualname__ == 'DateTimeField':
+                data[f] = get_next_datetime(next_value)
+            elif ffield.__class__.__qualname__ == 'DateField':
+                data[f] = get_next_date(next_value)
+            elif ffield.__class__.__qualname__ == 'BinaryField':
+                data[f] = field_to_bin(str(next_value))
+            elif ffield.__class__.__qualname__ == 'TimeField':
+                data[f] = get_next_time(next_value)
+            elif ffield.__class__.__qualname__ == 'UUIDField':
+                data[f] = field_to_uuid(next_value)
+            elif ffield.__class__.__qualname__ == 'BooleanField':
+                data[f] = get_bool(next_value)
+            else:
+                data[f] = str(next_value)
+        data_keys = set(data.keys())
+        for f in data_keys & set(fkey.keys()):
+            fkey_name = fkey[f]
+            relations.append([fkey_name, data[f]])
+        for f in data_keys & set(many_key.keys()):
+            mf_name = many_key[f]
+            for mf_pk in data[f]:
+                relations.append([mf_name, mf_pk])
+        if 'pk' in data:
+            del data['pk']
+        return data, relations
 
-    def load_into_testcase(self, ignore=False, database='default', app_label=None, verbosity=1):
-        with tempfile.NamedTemporaryFile('r+') as tempf:
-            fixture_data = self.output()
-            fixture_name = tempf.name + '.json'
-            os.rename(tempf.name, fixture_name)
-            tempf.name = fixture_name
-            json.dump(fixture_data, tempf.file)
-            # for py3.5
-            if getattr(tempf, '_closer', None):
-                tempf._closer.name = fixture_name
-            tempf.file.seek(0)
-            loaddata_command = loaddata.Command()
-            loaddata_command.handle(tempf.name, ignore=ignore, database=database, app_label=app_label, verbosity=verbosity)
+    def get_fixture_data(self):
+        fixture_data = defaultdict(dict)
+        relation_models = []
+        cached_app_model = self.cached_app_model
+        module_model_data = self.module_model_data
+        fixtures = self.fixtures
+        for module_model, model_values in fixtures.items():
+            model_fs = self.get_model_fs(module_model, cached_app_model)
+            for model_value in model_values:
+                pk = model_value.pop('pk')
+                data, releations = self.get_model_data(module_model, model_value, model_fs, module_model_data)
+                fixture_data[module_model][pk] = {'pk': pk, 'model': module_model.lower(), 'fields': data}
+                if releations is not None:
+                    relation_models.extend(releations)
+        # fill foreign key, many to many
+        while relation_models:
+            module_model, pk = relation_models.pop()
+            if pk in fixture_data[module_model]:
+                continue
+            model_fs = self.get_model_fs(module_model, cached_app_model)
+            data, releations = self.get_model_data(module_model, {'pk': pk}, model_fs, module_model_data)
+            fixture_data[module_model][pk] = {'pk': pk, 'model': module_model.lower(), 'fields': data}
+            if releations is not None:
+                relation_models.extend(releations)
+        json_data = []
+        for i in fixture_data:
+            module_data = fixture_data[i]
+            for _, value in module_data.items():
+                json_data.append(value)
+        return json_data
+
+    def save(self):
+        '''
+        save data into db
+        '''
+        data = self.get_fixture_data()
+        wrap_file_fixture = WrapFileFixture(data)
+        save_to_db(wrap_file_fixture)
+        return
+
+    def save_file(self, file_path='fixture.json'):
+        '''
+        save data into file
+        '''
+        data = self.get_fixture_data()
+        with open(file_path, 'w') as f:
+            json.dump(data, f)
+        return
 
 
-class FixtureFileGen(object):
-
-    def __init__(self, templates, file_path='fixtures'):
-        self.templates = templates
-        self.file_path = file_path
-        self.index = 0
-
-    def next(self):
-        if self.index < len(self.templates):
-            template = self.templates[self.index]
-            tem = importlib.import_module(template)
-            ef = EasyFixture(tem.fixtures_template)
-            fixture_path = os.path.join(self.file_path, os.path.basename(tem.__file__).split('.')[0]) + '.json'
-            with open(fixture_path, 'w') as f:
-                f.write(ef.output())
-            self.index += 1
-            return fixture_path
-        else:
-            raise StopIteration
-
-    def __iter__(self):
-        return self
+# class FixtureFileGen:
+# 
+#     def __init__(self, templates, file_path='fixtures'):
+#         self.templates = templates
+#         self.file_path = file_path
+#         self.index = 0
+#         return
+# 
+#     def next(self):
+#         if self.index < len(self.templates):
+#             template = self.templates[self.index]
+#             tem = importlib.import_module(template)
+#             ef = EasyFixture(tem.fixtures_template)
+#             fixture_path = os.path.join(self.file_path, os.path.basename(tem.__file__).split('.')[0]) + '.json'
+#             with open(fixture_path, 'w') as f:
+#                 f.write(ef.output())
+#             self.index += 1
+#             return fixture_path
+#         else:
+#             raise StopIteration
+# 
+#     def __iter__(self):
+#         return self

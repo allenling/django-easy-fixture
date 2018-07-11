@@ -1,6 +1,3 @@
-# coding=utf-8
-from __future__ import unicode_literals
-from __future__ import absolute_import
 import importlib
 import json
 
@@ -13,7 +10,7 @@ class Command(BaseCommand):
     help = 'create a available fixture with a simple model dict'
 
     def add_arguments(self, parser):
-        parser.add_argument('fixture_path', help='fixture python path, like path.to.fixture.fixture_var')
+        parser.add_argument('fixture_path', help='')
 
     def handle(self, *args, **options):
         fixture_path = options['fixture_path']
@@ -22,3 +19,4 @@ class Command(BaseCommand):
         fixture_var = getattr(fpath, fixture_var_name)
         ef = EasyFixture(fixture_var)
         self.stdout.write(json.dumps(ef.output()))
+        return
